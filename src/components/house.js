@@ -1,122 +1,135 @@
 "use client";
-
 import * as THREE from "three";
 import { useRef } from "react";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useLoader } from "@react-three/fiber";
 import { OrbitControls, PivotControls } from "@react-three/drei";
 import { Geometry, Base, Subtraction, Addition } from "@react-three/csg";
-import { Environment } from "./Environment";
+import { EnvironmentScene } from "./Environment";
 
+const floor = new THREE.CylinderGeometry(1, 1, 1, 32);
+const pole = new THREE.CylinderGeometry(1, 1, 1);
 const box = new THREE.BoxGeometry();
-const cyl = new THREE.CylinderGeometry(1, 1, 2, 20);
-const tri = new THREE.CylinderGeometry(1, 1, 2, 3);
+const doorCyl = new THREE.CylinderGeometry(1, 1, 2, 20);
 
-export default function TestHouse() {
+export default function TestYurt() {
   return (
-    <Canvas shadows camera={{ position: [-15, 10, 15], fov: 25 }}>
+    <Canvas shadows camera={{ position: [-45, 10, 15], fov: 35 }}>
       <color attach="background" args={["skyblue"]} />
-      <House />
-      <Environment />
+      <Yurt />
+      <EnvironmentScene />
       <OrbitControls makeDefault />
     </Canvas>
   );
 }
 
-function House(props) {
+function Yurt(props) {
   const csg = useRef();
   return (
     <mesh receiveShadow castShadow {...props}>
       <Geometry ref={csg} computeVertexNormals>
-        <Base name="base" geometry={box} scale={[3, 3, 3]} />
-        <Subtraction name="cavity" geometry={box} scale={[2.7, 2.7, 2.7]} />
+        <Base
+          name="floor"
+          geometry={floor}
+          scale={[5, 0.1, 5]}
+          position={[0, -1.35, 0]}
+        />
+        <Addition name="walls">
+          <Geometry>
+            <Base
+              name="outerWall"
+              geometry={new THREE.CylinderGeometry(5, 5, 3, 32)}
+              position={[0, 0.2, 0]}
+            />
+            <Subtraction
+              name="innerWall"
+              geometry={new THREE.CylinderGeometry(4.9, 4.9, 3, 32)}
+              position={[0, 0.2, 0]}
+            />
+          </Geometry>
+        </Addition>
+
         <Addition
-          name="roof"
-          geometry={tri}
-          scale={[2.5, 1.5, 1.425]}
-          rotation={[-Math.PI / 2, 0, 0]}
-          position={[0, 2.2, 0]}
+          name="pole1"
+          geometry={pole}
+          scale={[0.1, 3, 0.1]}
+          position={[0, 0.1, -1.2]}
         />
-        <Chimney scale={0.5} position={[-0.75, 3, 0.8]} />
-        <Window
-          position={[1.1, 2.5, 0]}
-          scale={0.6}
-          rotation={[0, Math.PI / 2, 0]}
+        <Addition
+          name="pole2"
+          geometry={pole}
+          scale={[0.1, 3, 0.1]}
+          position={[0, 0.1, 1.2]}
         />
-        <Window position={[0, 2.5, 1.5]} scale={0.6} rotation={[0, 0, 0]} />
+
+        <Addition name="roof">
+          <Geometry>
+            <Base
+              geometry={new THREE.ConeGeometry(5, 3.1, 32)}
+              position={[0, 3.25, 0]}
+            />
+            <Subtraction
+              geometry={new THREE.ConeGeometry(4.8, 3.1, 32)}
+              position={[0, 3.25, 0]}
+            />
+          </Geometry>
+        </Addition>
+
+        <Subtraction
+          name="toonoOpening"
+          geometry={new THREE.CylinderGeometry(1, 1, 0.6, 32)}
+          scale={[1.3, 3.2, 1.3]}
+          position={[0, 4, 0]}
+        />
         <PivotControls
-          activeAxes={[false, true, true]}
-          rotation={[0, Math.PI / 2, 0]}
-          scale={1}
-          anchor={[0, 0, 0.4]}
-          onDrag={() => csg.current.update()}
-        >
-          <Window position={[0, 0.25, 1.5]} scale={1.25} />
-        </PivotControls>
-        <PivotControls
-          activeAxes={[false, true, true]}
-          rotation={[0, Math.PI, 0]}
-          scale={1}
-          anchor={[0.4, 0, 0]}
-          onDrag={() => csg.current.update()}
-        >
-          <Window
-            rotation={[0, Math.PI / 2, 0]}
-            position={[1.425, 0.25, 0]}
-            scale={1.25}
-          />
-        </PivotControls>
-        <PivotControls
-          activeAxes={[false, true, true]}
-          scale={1}
-          anchor={[-0.5, 0, 0]}
+          depthTest={false}
+          anchor={[0, 0, 0]}
           onDrag={() => csg.current.update()}
         >
           <Door
             rotation={[0, Math.PI / 2, 0]}
-            position={[-1.425, -0.45, 0]}
-            scale={[1, 0.9, 1]}
+            position={[-5, -0.25, 0]}
+            scale={[1.2, 0.9, 1.2]}
           />
         </PivotControls>
       </Geometry>
-      <meshStandardMaterial envMapIntensity={0.25} />
+      <meshStandardMaterial
+        roughness={0.5}
+        metalness={0.1}
+        envMapIntensity={0.25}
+        side={THREE.DoubleSide}
+      />
     </mesh>
   );
 }
 
-const Door = (props) => (
-  <Subtraction {...props}>
-    <Geometry>
-      <Base geometry={box} scale={[1, 2, 1]} />
-      <Addition
-        geometry={cyl}
-        scale={0.5}
-        rotation={[Math.PI / 2, 0, 0]}
-        position={[0, 1, 0]}
-      />
-    </Geometry>
-  </Subtraction>
-);
+const Door = (props) => {
+  // Load wood texture
+  const texture = useLoader(THREE.TextureLoader, "/door-texture.jpeg");
+  //   const texture = THREE.TextureLoader.load("/door-texture.jpeg");
+  // Adjust texture settings
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(2, 1);
 
-const Window = (props) => (
-  <Subtraction {...props}>
-    <Geometry>
-      <Base geometry={box} />
-      <Subtraction geometry={box} scale={[0.05, 1, 1]} />
-      <Subtraction geometry={box} scale={[1, 0.05, 1]} />
-    </Geometry>
-  </Subtraction>
-);
+  // Create material with texture
+  const woodMaterial = new THREE.MeshStandardMaterial({
+    map: texture,
+    roughness: 0.8,
+    metalness: 0.05,
+  });
 
-const Chimney = (props) => (
-  <Addition name="chimney" {...props}>
-    <Geometry>
-      <Base name="base" geometry={box} scale={[1, 2, 1]} />
-      <Subtraction
-        name="hole"
-        geometry={box}
-        scale={[0.7, 2, 0.7]}
-        position={[0, 0.5, 0]}
-      />
-    </Geometry>
-  </Addition>
-);
+  return (
+    <Subtraction {...props}>
+      <Geometry>
+        <Base geometry={box} scale={[1, 2, 1]} material={woodMaterial} />
+        <Addition
+          geometry={doorCyl}
+          scale={0.5}
+          rotation={[Math.PI / 2, 0, 0]}
+          position={[0, 1, 0]}
+          material={woodMaterial}
+        />
+      </Geometry>
+    </Subtraction>
+  );
+};
