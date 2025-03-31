@@ -128,32 +128,16 @@ function Yurt({ visibility, ...props }) {
         receiveShadow
         position={[-0.07, 0, 0.35]}
       />
-      <primitive
-        object={backLeft}
-        castShadow
-        receiveShadow
-      />
-      <primitive
-        object={backRight}
-        castShadow
-        receiveShadow
-      />
-      <primitive
-        object={frontLeft}
-        castShadow
-        receiveShadow
-      />
+      <primitive object={backLeft} castShadow receiveShadow />
+      <primitive object={backRight} castShadow receiveShadow />
+      <primitive object={frontLeft} castShadow receiveShadow />
       <primitive
         object={frontRight}
         castShadow
         receiveShadow
-      // position={[0, -0.5, -2]}
+        // position={[0, -0.5, -2]}
       />
-      <primitive
-        object={roofBurees}
-        castShadow
-        receiveShadow
-      />
+      <primitive object={roofBurees} castShadow receiveShadow />
     </group>
   );
 }
